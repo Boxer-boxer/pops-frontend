@@ -10,6 +10,7 @@
 
 <style>
 .navbar {
+  z-index: 1000;
   height: 4em;
   background: #60ebd2;
   position: absolute;

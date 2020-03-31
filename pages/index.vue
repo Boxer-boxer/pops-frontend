@@ -1,21 +1,20 @@
 <template>
   <div class="container">
-    {{ articles }}
-    <GmapMap
-      :center="{ lat: 10, lng: 10 }"
-      :zoom="7"
-      map-type-id="terrain"
-      style="width: 1500px; height: 1300px"
-    >
-      <GmapMarker
-        :key="index"
-        v-for="(m, index) in markers"
-        :position="m.position"
-        :clickable="true"
-        :draggable="true"
-        @click="center = m.position"
-      />
-    </GmapMap>
+    <client-only>
+      <l-map
+        style="min-height: 100vh;"
+        :zoom="zoom"
+        :center="center"
+        :options="{ zoomControl: false }"
+        @click="addMarker"
+      >
+        <l-tile-layer :url="url"></l-tile-layer>
+        <l-marker v-for="(geoloc, key) in events" :key="key" :lat-lng="geoloc">
+          <l-popup :content="geoloc.name" ref="popup"> </l-popup>
+        </l-marker>
+      </l-map>
+    </client-only>
+
     <Navbar />
   </div>
 </template>
@@ -28,67 +27,77 @@ import Navbar from '~/components/Navbar.vue'
 export default {
   components: {
     Navbar
-    // StaticMap
   },
+  computed: {},
   mounted() {
-    // At this point, the child GmapMap has been mounted, but
-    // its map has not been initialized.
-    // Therefore we need to write mapRef.$mapPromise.then(() => ...)
-    //  this.$refs.mapRef.$mapPromise.then((map) => {
-    //    map.panTo({ lat: 1.38, lng: 103.8 })
-    //  })
+    /* for (let i = 0; i < this.$refs.popup.length; i++) {
+      this.$refs.popup[i].innerHTML =
+    } */
   },
   async asyncData() {
-    const { data } = await axios.get('https://localhost:44326/api/users')
-    return { articles: data }
+    const { data } = await axios.get(`${process.env.API_URL}/api/event`)
+    console.log('data')
+    console.log(data)
+    const locs = []
+    for (let d = 0; d < data.length; d++) {
+      const latitude = data[d].lat
+      const longitude = data[d].lng
+      const na =
+        data[d].name +
+        '<br /> Hosted by: ' +
+        data[d].userId +
+        '<br /> Starts at: ' +
+        data[d].startHour +
+        '<br /> Until: ' +
+        data[d].endHour
+      const loc = { lat: latitude, lng: longitude, name: na }
+      locs.push(loc)
+    }
+    return { event: data, events: locs }
+  },
+  methods: {
+    async addMarker(e) {
+      await axios.post(`${process.env.API_URL}/api/event`, {
+        user: '5e80111c6d65770000a2c1b2',
+        timestamp: '2020-03-29T03:06:41Z',
+        starthour: '2020-03-29T03:06:41Z',
+        endHour: '2020-03-29T03:06:41Z',
+        lat: e.latlng.lat.toString(),
+        lng: e.latlng.lng.toString(),
+        name: 'Testing :)'
+      })
+      this.updateMarkers()
+    },
+    async updateMarkers() {
+      const { data } = await axios.get(`${process.env.API_URL}/api/event`)
+      console.log('data')
+      console.log(data)
+      const locs = []
+      for (let d = 0; d < data.length; d++) {
+        const latitude = data[d].lat
+        const longitude = data[d].lng
+        const loc = { lat: latitude, lng: longitude }
+        locs.push(loc)
+      }
+      return { event: data, events: locs }
+    },
+    test() {
+      console.log('e')
+    }
   },
   data() {
     return {
-      apiKey: `${process.env.API_KEY}`, // required
-      zoom: 13, // required
-      center: 'Brooklyn+Bridge,New+York,NY',
-      format: 'gif',
-      language: 'ja',
-      markers: [
-        {
-          label: 'B',
-          color: 'blue',
-          lat: 40.702147,
-          lng: -74.015794,
-          size: 'normal'
-        },
-        {
-          label: 'Y',
-          color: 'yellow',
-          lat: 40.711614,
-          lng: -74.012318,
-          size: 'tiny'
-        },
-        {
-          label: 'G',
-          color: 'green',
-          lat: 40.718217,
-          lng: -74.015794,
-          size: 'small',
-          icon: 'http://www.airsoftmap.net/images/pin_map.png'
-        }
-      ],
-      paths: [
-        {
-          color: 'blue',
-          weight: 8,
-          geodesic: false,
-          fillcolor: '0xFFFF0033',
-          locations: [
-            { startLat: 40.737102, endLng: -73.990318 },
-            { startLat: 40.749825, endLng: -73.987963 },
-            { startLat: 40.752946, endLng: -73.987384 },
-            { startLat: 40.762946, endLng: -73.997399 }
-          ]
-        }
-      ],
-      type: 'roadmap',
-      size: [800, 400]
+      url: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
+      zoom: 15,
+      center: [43.65107, -79.347015],
+      locs: [],
+      newMarker: [],
+
+      geolocs: [
+        { lat: 43.65107, lng: -79.347015 },
+        { lat: 47.5125, lng: 16.03823 },
+        { lat: 47.532612, lng: 16.154989 }
+      ]
     }
   }
 }
