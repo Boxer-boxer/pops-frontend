@@ -15,9 +15,10 @@
     "@nuxtjs/axios": "^5.3.6",
     "@nuxtjs/dotenv": "^1.4.0",
     "@nuxtjs/pwa": "^3.0.0-0",
+    "leaflet": "^1.6.0",
     "nuxt": "^2.0.0",
-    "vue-static-map": "^3.0.2",
-    "vue2-google-maps": "^0.10.7"
+    "nuxt-leaflet": "0.0.21",
+    "vue2-leaflet": "^2.5.2"
   },
   "devDependencies": {
     "@nuxtjs/eslint-config": "^2.0.0",

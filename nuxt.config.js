@@ -27,7 +27,7 @@ export default {
   /*
    ** Plugins to load before mounting the App
    */
-  plugins: ['@/plugins/axios'],
+  plugins: ['@/plugins/axios', { src: '~plugins/leaflet.js', ssr: false }],
   /*
    ** Nuxt.js dev-modules
    */
@@ -43,7 +43,8 @@ export default {
     '@nuxtjs/axios',
     '@nuxtjs/pwa',
     // Doc: https://github.com/nuxt-community/dotenv-module
-    '@nuxtjs/dotenv'
+    '@nuxtjs/dotenv',
+    'nuxt-leaflet'
   ],
   /*
    ** Axios module configuration
