@@ -27,7 +27,11 @@ export default {
   /*
    ** Plugins to load before mounting the App
    */
-  plugins: ['@/plugins/axios', { src: '~plugins/leaflet.js', ssr: false }],
+  plugins: [
+    '@/plugins/axios',
+    { src: '~plugins/leaflet.js', ssr: false },
+    { src: '~plugins/vue2-leaflet-markercluster.js', ssr: false }
+  ],
   /*
    ** Nuxt.js dev-modules
    */
