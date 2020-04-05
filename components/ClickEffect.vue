@@ -67,7 +67,7 @@ svg {
   position: absolute;
   top: 50%;
   left: 50%;
-  stroke-width: 3px;
+  stroke-width: 6px;
   transform: translate(-50%, -50%);
   stroke: rgb(59, 143, 206);
   animation: logo-hue-rotation 10210ms linear forwards infinite;

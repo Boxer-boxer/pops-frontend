@@ -5,6 +5,7 @@
         <client-only>
           <l-map
             id="map"
+            ref="map"
             style="min-height: 100vh;"
             :zoom="zoom"
             :center="center"
@@ -12,15 +13,22 @@
             @click="createNodeAndMarker"
           >
             <l-tile-layer :url="url"></l-tile-layer>
-
-            <l-marker
-              v-for="(geoloc, key) in events"
-              :key="key"
-              :lat-lng="geoloc"
-            >
-              <l-popup :content="geoloc.name" ref="popup"> </l-popup>
-            </l-marker>
+            <v-marker-cluster>
+              <l-marker
+                v-for="(geoloc, key) in events"
+                :key="key"
+                :lat-lng="geoloc"
+              >
+                <l-popup :content="geoloc.name" ref="popup"> </l-popup>
+                <l-tooltip> </l-tooltip>
+              </l-marker>
+            </v-marker-cluster>
           </l-map>
+          <button class="recenter-button" @click="findMe">
+            <img
+              src="https://img.icons8.com/ios-glyphs/30/000000/location-off.png"
+            />
+          </button>
         </client-only>
 
         <ClickEffect :x="x" :y="y" :effect="effect" />
@@ -30,6 +38,8 @@
         v-if="open"
         :open="open"
         @update-window-state="updateWindow"
+        :lat="event.lat"
+        :lng="event.lng"
       />
       <!-- <CreationForm :open="open" @update-window-state="updateWindow" />
       -->
@@ -39,12 +49,25 @@
 
 <script>
 import axios from 'axios'
+
 // import Vue2LeafletMarkercluster from 'Vue2-leaflet-markercluster'
 
 import Navbar from '~/components/Navbar.vue'
 import ClickEffect from '~/components/ClickEffect.vue'
 import CreationForm from '~/components/CreationForm.vue'
+// import Vue2LeafletMarkerCluster from 'vue2-leaflet-markercluster'
+let Vue2LeafletMarkerCluster = {}
+if (process.client) {
+  Vue2LeafletMarkerCluster = require('vue2-leaflet-markercluster')
+  //  Vue2LeafletLocatecontrol = require('vue2-leaflet-locatecontrol')
+}
+/* let Vue2LeafletMarkerCluster = {}
 
+if (!process.env.SERVER) {
+  console.log('loading vue2-leaflet-markercluster')
+  Vue2LeafletMarkerCluster = require('vue2-leaflet-markercluster')
+}
+*/
 export default {
   head() {
     return {
@@ -63,15 +86,20 @@ export default {
     }
   },
   components: {
+    'v-marker-cluster': Vue2LeafletMarkerCluster,
+
     Navbar,
     ClickEffect,
     CreationForm
   },
   computed: {},
   mounted() {
-    /* for (let i = 0; i < this.$refs.popup.length; i++) {
-      this.$refs.popup[i].innerHTML =
-    } */
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(this.showPosition)
+      console.log(navigator.geolocation)
+    } else {
+      console.log('Geolocation is not supported by this browser.')
+    }
   },
   async asyncData() {
     const { data } = await axios.get(`${process.env.API_URL}/api/event`)
@@ -81,32 +109,68 @@ export default {
     for (let d = 0; d < data.length; d++) {
       const latitude = data[d].lat
       const longitude = data[d].lng
+
+      const parsedStHour = Date.parse(data[d].startHour)
+      const newStHour = new Date(parsedStHour)
+      let stHours = newStHour.getHours()
+      stHours = ('0' + stHours).slice(-2)
+      let stMinutes = newStHour.getMinutes()
+      stMinutes = ('0' + stMinutes).slice(-2)
+
+      const startsAt = `${stHours}:${stMinutes}`
+
+      const parsedEnHour = Date.parse(data[d].endHour)
+      const newEnHour = new Date(parsedEnHour)
+      let enHours = newEnHour.getHours()
+      enHours = ('0' + enHours).slice(-2)
+      let enMinutes = newEnHour.getMinutes()
+      enMinutes = ('0' + enMinutes).slice(-2)
+
+      const endsAt = `${enHours}:${enMinutes}`
+
       const na =
+        '<h1>' +
         data[d].name +
+        '</h1>' +
+        '<br /><h3> Starts at: ' +
+        startsAt +
+        '</h3>' +
+        '<h3> Until: ' +
+        endsAt +
+        '</h3>' +
         '<br /> Hosted by: ' +
-        data[d].userId +
-        '<br /> Starts at: ' +
-        data[d].startHour +
-        '<br /> Until: ' +
-        data[d].endHour
+        data[d].userId
       const loc = { lat: latitude, lng: longitude, name: na }
       locs.push(loc)
     }
     return { event: data, events: locs }
   },
   methods: {
-    async addMarker(e) {
-      // screenX/Y gives the coordinates relative to the screen in device pixels.
-      // console.log(e)
-      await axios.post(`${process.env.API_URL}/api/event`, {
-        user: '5e80111c6d65770000a2c1b2',
-        timestamp: '2020-03-29T03:06:41Z',
-        starthour: '2020-03-29T03:06:41Z',
-        endHour: '2020-03-29T03:06:41Z',
-        lat: e.latlng.lat.toString(),
-        lng: e.latlng.lng.toString(),
-        name: 'Testing :)'
-      })
+    findMe() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(this.showPosition)
+      }
+    },
+    showPosition(position) {
+      const currPos = []
+      currPos.push(this.$refs.map.mapObject.getCenter().lat)
+      currPos.push(this.$refs.map.mapObject.getCenter().lng)
+
+      this.center = currPos
+
+      const initCenter = []
+      initCenter.push(position.coords.latitude)
+      initCenter.push(position.coords.longitude)
+      this.center = initCenter
+      this.$refs.map.setCenter(currPos, initCenter)
+    },
+    addMarker(e) {
+      // this.$L.marker([43.65107, -79.347015]).addTo(map)
+
+      // this.$L.map.marker([43.65107, -79.347015]).addTo(map)
+      this.event.lat = e.latlng.lat.toString()
+      this.event.lng = e.latlng.lng.toString()
+
       this.open = true
       this.updateMarkers()
     },
@@ -137,12 +201,12 @@ export default {
     updateWindow(opened) {
       this.open = opened
     }
-    // click: (e) => console.log('clusterclick', e),
-    // ready: (e) => console.log('ready', e)
   },
   data() {
     return {
       effect: false,
+
+      randomNum: 0,
       x: 0,
       y: 0,
       url: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
@@ -152,6 +216,10 @@ export default {
       newMarker: [],
       clusterOptions: {},
       open: null,
+      event: {
+        lat: null,
+        lng: null
+      },
       geolocs: [
         { lat: 43.65107, lng: -79.347015 },
         { lat: 47.5125, lng: 16.03823 },
@@ -163,6 +231,24 @@ export default {
 </script>
 
 <style>
+/* @import '~leaflet.markercluster/dist/MarkerCluster.css';
+@import '~leaflet.markercluster/dist/MarkerCluster.Default.css';
+*/
+.recenter-button {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  z-index: 999;
+  height: 50px;
+  width: 50px;
+  border: none;
+  background: #60ebd2;
+  cursor: pointer;
+  transition: 0.5s linear;
+}
+.recenter-button:hover {
+  transform: scale(1.1);
+}
 .container {
   margin: 0 auto;
   min-height: 100vh;
@@ -198,3 +284,5 @@ export default {
   opacity: 0;
 }
 </style>
+
+// https://codepen.io/mmsmdali/pen/KqjNPN
