@@ -30,7 +30,7 @@ export default {
   plugins: [
     '@/plugins/axios',
     { src: '~plugins/leaflet.js', ssr: false },
-    { src: '~plugins/vue2-leaflet-markercluster.js', ssr: false }
+    { src: '~plugins/vue2-leaflet-markercluster.js', mode: 'client' }
   ],
   /*
    ** Nuxt.js dev-modules
