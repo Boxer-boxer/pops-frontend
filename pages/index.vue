@@ -22,6 +22,7 @@
                 <l-popup :content="geoloc.name" ref="popup"> </l-popup>
                 <l-tooltip> </l-tooltip>
               </l-marker>
+              <l-marker :lat-lng="center"></l-marker>
             </v-marker-cluster>
           </l-map>
           <button class="recenter-button" @click="findMe">
