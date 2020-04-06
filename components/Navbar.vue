@@ -1,6 +1,6 @@
 <template>
   <div class="navbar">
-    <nuxt-link to="/index">
+    <nuxt-link to="/users">
       <img
         src="https://img.icons8.com/material-outlined/24/000000/user--v1.png"
       />
@@ -10,6 +10,7 @@
 
 <style>
 .navbar {
+  box-shadow: 2px 0px 16px #000;
   z-index: 1000;
   height: 4em;
   background: #60ebd2;
