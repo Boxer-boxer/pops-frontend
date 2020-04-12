@@ -38,7 +38,6 @@
                     Join this event!
                   </button>
                 </l-popup>
-                <l-tooltip> </l-tooltip>
               </l-marker>
             </v-marker-cluster>
             <l-marker :lat-lng="center" ref="userMarker"></l-marker>
