@@ -16,14 +16,32 @@
             <v-marker-cluster>
               <l-marker
                 v-for="(geoloc, key) in events"
-                :key="key"
-                :lat-lng="geoloc"
+                :ref="`eventMarker${key}`"
+                :key="geoloc.id"
+                :id="geoloc.id"
+                :lat-lng="geoloc.locs"
+                @click="showJoinButton"
               >
-                <l-popup :content="geoloc.name" ref="popup"> </l-popup>
+                <l-popup ref="popup" class="popup">
+                  <div id="message">
+                    <h6>{{ geoloc.id }}</h6>
+                    <h2 class="popup-name">{{ geoloc.name }}</h2>
+                    <h4 class="popup-hours">
+                      {{ geoloc.starts }} - {{ geoloc.ends }}
+                    </h4>
+                  </div>
+
+                  <button
+                    @click="showJoinButton(geoloc.id)"
+                    class="popup-button"
+                  >
+                    Join this event!
+                  </button>
+                </l-popup>
                 <l-tooltip> </l-tooltip>
               </l-marker>
-              <l-marker :lat-lng="center"></l-marker>
             </v-marker-cluster>
+            <l-marker :lat-lng="center" ref="userMarker"></l-marker>
           </l-map>
           <button class="recenter-button" @click="findMe">
             <img
@@ -58,12 +76,14 @@ import ClickEffect from '~/components/ClickEffect.vue'
 import CreationForm from '~/components/CreationForm.vue'
 // import Vue2LeafletMarkerCluster from 'vue2-leaflet-markercluster'
 let Vue2LeafletMarkerCluster = {}
+// let L = {}
 if (process.client) {
   Vue2LeafletMarkerCluster = require('vue2-leaflet-markercluster')
+  // L = require('leaflet')
   //  Vue2LeafletLocatecontrol = require('vue2-leaflet-locatecontrol')
 }
 /* let Vue2LeafletMarkerCluster = {}
-
+import {LMap, LTileLayer, LMarker, LIcon} from 'vue2-leaflet';
 if (!process.env.SERVER) {
   console.log('loading vue2-leaflet-markercluster')
   Vue2LeafletMarkerCluster = require('vue2-leaflet-markercluster')
@@ -97,19 +117,17 @@ export default {
   mounted() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(this.showPosition)
-      console.log(navigator.geolocation)
     } else {
-      console.log('Geolocation is not supported by this browser.')
     }
   },
   async asyncData() {
     const { data } = await axios.get(`${process.env.API_URL}/api/event`)
-    console.log('data')
-    console.log(data)
+
     const locs = []
     for (let d = 0; d < data.length; d++) {
       const latitude = data[d].lat
       const longitude = data[d].lng
+      const idEv = data[d].id
 
       const parsedStHour = Date.parse(data[d].startHour)
       const newStHour = new Date(parsedStHour)
@@ -130,6 +148,9 @@ export default {
       const endsAt = `${enHours}:${enMinutes}`
 
       const na =
+        '<h5>' +
+        data[d].id +
+        '</h5>' +
         '<h1>' +
         data[d].name +
         '</h1>' +
@@ -141,18 +162,42 @@ export default {
         '</h3>' +
         '<br /> Hosted by: ' +
         data[d].userId
-      const loc = { lat: latitude, lng: longitude, name: na }
+
+      const loc = {
+        id: idEv,
+        name: data[d].name,
+        starts: startsAt,
+        ends: endsAt,
+        locs: { lat: latitude, lng: longitude, name: na }
+      }
       locs.push(loc)
     }
     return { event: data, events: locs }
   },
+  updated() {
+    if (this.$refs.userMarker.mapObject._icon) {
+      this.$refs.userMarker.mapObject._icon.style.height = '50px'
+      this.$refs.userMarker.mapObject._icon.style.width = '50px'
+      this.$refs.userMarker.mapObject._icon.src = '/icons8-unicórnio-96.png'
+      // 'https://img.icons8.com/nolan/64/unicorn.png'
+      /* this.$refs.eventMarker.mapObject._icon.src =
+        'https://img.icons8.com/emoji/48/000000/octopus-emoji.png'
+      */
+    }
+  },
   methods: {
+    showJoinButton(id) {
+      console.log(id)
+
+      this.joinButton = true
+    },
     findMe() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(this.showPosition)
       }
     },
     showPosition(position) {
+      this.joinButton = false
       const currPos = []
       currPos.push(this.$refs.map.mapObject.getCenter().lat)
       currPos.push(this.$refs.map.mapObject.getCenter().lng)
@@ -165,7 +210,8 @@ export default {
       this.center = initCenter
       this.$refs.map.setCenter(currPos, initCenter)
     },
-    addMarker(e) {
+    async addMarker(e) {
+      this.joinButton = false
       // this.$L.marker([43.65107, -79.347015]).addTo(map)
 
       // this.$L.map.marker([43.65107, -79.347015]).addTo(map)
@@ -173,19 +219,24 @@ export default {
       this.event.lng = e.latlng.lng.toString()
 
       this.open = true
-      this.updateMarkers()
+      await this.updateMarkers
     },
     async updateMarkers() {
       const { data } = await axios.get(`${process.env.API_URL}/api/event`)
       // console.log('data')
       // console.log(data)
       const locs = []
+      // const metaData = []
       for (let d = 0; d < data.length; d++) {
         const latitude = data[d].lat
         const longitude = data[d].lng
-        const loc = { lat: latitude, lng: longitude }
-        locs.push(loc)
+        const idEv = data[d].id
+        const location = { lat: latitude, lng: longitude }
+        const result = { id: idEv, loc: location }
+
+        locs.push(result)
       }
+
       return { event: data, events: locs }
     },
     async createEffect() {
@@ -206,7 +257,7 @@ export default {
   data() {
     return {
       effect: false,
-
+      joinButton: false,
       randomNum: 0,
       x: 0,
       y: 0,
@@ -235,7 +286,55 @@ export default {
 /* @import '~leaflet.markercluster/dist/MarkerCluster.css';
 @import '~leaflet.markercluster/dist/MarkerCluster.Default.css';
 */
+.popup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.popup-name {
+  text-align: center;
+  font-weight: 500;
+  margin: 0.5em;
+}
+.popup-button {
+  padding: 0.5em 5em;
+  margin: 1em;
+  border: none;
+  box-shadow: 0px 0px 6px #000;
+  background: #60ebd2;
+  cursor: pointer;
+  transition: 0.25s linear;
+}
+.popup-button:hover {
+  transform: scale(1.1);
+}
+.popup-hours {
+  text-align: center;
+  font-size: 1.2em;
+  font-weight: 100;
+}
+.join-event-button {
+  position: absolute;
+  z-index: 999;
+  padding: 0.5em 1.5em;
+  font-size: 1.7em;
+  border: none;
+  box-shadow: 0px 0px 10px 1px #383838d6;
+  background: #60ebd2;
+  border-radius: 4px;
+  color: #000;
+  bottom: 10vh;
+  transition: 0.25s linear;
+}
+
+.join-event-button:hover {
+  transform: scale(1.1);
+}
+
 .recenter-button {
+  box-shadow: 0px 0px 10px 1px #383838d6;
   position: absolute;
   top: 15px;
   left: 15px;

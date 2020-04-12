@@ -182,6 +182,8 @@ export default {
           })
           .then((res) => console.log(res))
       }
+      this.closeWindow()
+      this.$router.go()
     }
   },
   mounted() {
@@ -200,6 +202,15 @@ export default {
 }
 </script>
 <style>
+.filter-form {
+  position: absolute;
+  border: 10px solid green;
+  bottom: 0;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 9999;
+}
 @media screen and (min-width: 701px) {
   .submit-button {
     z-index: 99999;
@@ -303,6 +314,7 @@ export default {
     flex-direction: column;
     box-shadow: 1px 1px 15px black;
     position: relative;
+    z-index: 9999999;
   }
   .filter {
     position: absolute;
