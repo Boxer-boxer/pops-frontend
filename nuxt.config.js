@@ -46,6 +46,7 @@ export default {
     // Doc: https://axios.nuxtjs.org/usage
     '@nuxtjs/axios',
     '@nuxtjs/pwa',
+    '@nuxtjs/auth',
     // Doc: https://github.com/nuxt-community/dotenv-module
     '@nuxtjs/dotenv',
     'nuxt-leaflet'
@@ -54,10 +55,30 @@ export default {
    ** Axios module configuration
    ** See https://axios.nuxtjs.org/options
    */
-  axios: {},
+  axios: {
+    baseURL: 'https://localhost:44326/users'
+  },
   /*
    ** Build configuration
    */
+
+  auth: {
+    strategies: {
+      local: {
+        endpoints: {
+          login: {
+            url: `authenticate`,
+            method: 'post',
+            propertyName: false
+          },
+          user: false,
+          logout: false
+        },
+        tokenRequired: false,
+        tokenType: false
+      }
+    }
+  },
   build: {
     /*
      ** You can extend webpack config here

@@ -27,7 +27,10 @@
                     <h6>{{ geoloc.id }}</h6>
                     <h2 class="popup-name">{{ geoloc.name }}</h2>
                     <h4 class="popup-hours">
-                      {{ geoloc.starts }} - {{ geoloc.ends }}
+                      <h5 class="popup-hours">
+                        Starts at: {{ geoloc.starts }}
+                      </h5>
+                      <h5 class="popup-hours">Ends at: {{ geoloc.ends }}</h5>
                     </h4>
                   </div>
 
@@ -67,27 +70,16 @@
 
 <script>
 import axios from 'axios'
-
-// import Vue2LeafletMarkercluster from 'Vue2-leaflet-markercluster'
+// import { mapMutations } from 'vuex'
 
 import Navbar from '~/components/Navbar.vue'
 import ClickEffect from '~/components/ClickEffect.vue'
 import CreationForm from '~/components/CreationForm.vue'
-// import Vue2LeafletMarkerCluster from 'vue2-leaflet-markercluster'
+
 let Vue2LeafletMarkerCluster = {}
-// let L = {}
 if (process.client) {
   Vue2LeafletMarkerCluster = require('vue2-leaflet-markercluster')
-  // L = require('leaflet')
-  //  Vue2LeafletLocatecontrol = require('vue2-leaflet-locatecontrol')
 }
-/* let Vue2LeafletMarkerCluster = {}
-import {LMap, LTileLayer, LMarker, LIcon} from 'vue2-leaflet';
-if (!process.env.SERVER) {
-  console.log('loading vue2-leaflet-markercluster')
-  Vue2LeafletMarkerCluster = require('vue2-leaflet-markercluster')
-}
-*/
 export default {
   head() {
     return {
@@ -112,17 +104,43 @@ export default {
     ClickEffect,
     CreationForm
   },
-  computed: {},
+  computed: {
+    isUserOn() {
+      return this.$store.state.authentication.isAuthenticate
+    },
+    user() {
+      return this.$store.state.authentication.user
+    }
+  },
   mounted() {
+    console.log(this.isUserOn)
+    console.log(this.user)
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(this.showPosition)
     } else {
     }
   },
   async asyncData() {
-    const { data } = await axios.get(`${process.env.API_URL}/api/event`)
+    const now = new Date()
+    const { data } = await axios.post(`${process.env.API_URL}/api/event/now`, {
+      date: now
+    })
 
     const locs = []
+    const months = [
+      'JAN',
+      'FEB',
+      'MAR',
+      'APR',
+      'MAI',
+      'JUN',
+      'JUL',
+      'AGO',
+      'SEP',
+      'OCT',
+      'NOV',
+      'DEC'
+    ]
     for (let d = 0; d < data.length; d++) {
       const latitude = data[d].lat
       const longitude = data[d].lng
@@ -130,21 +148,25 @@ export default {
 
       const parsedStHour = Date.parse(data[d].startHour)
       const newStHour = new Date(parsedStHour)
+      const day = newStHour.getDate()
+      const month = months[newStHour.getMonth()]
       let stHours = newStHour.getHours()
       stHours = ('0' + stHours).slice(-2)
       let stMinutes = newStHour.getMinutes()
       stMinutes = ('0' + stMinutes).slice(-2)
 
-      const startsAt = `${stHours}:${stMinutes}`
+      const startsAt = `${day} ${month} ${stHours}:${stMinutes}`
 
       const parsedEnHour = Date.parse(data[d].endHour)
       const newEnHour = new Date(parsedEnHour)
       let enHours = newEnHour.getHours()
+      const enDay = newEnHour.getDate()
+      const enMonth = months[newEnHour.getMonth()]
       enHours = ('0' + enHours).slice(-2)
       let enMinutes = newEnHour.getMinutes()
       enMinutes = ('0' + enMinutes).slice(-2)
 
-      const endsAt = `${enHours}:${enMinutes}`
+      const endsAt = `${enDay} ${enMonth} ${enHours}:${enMinutes}`
 
       const na =
         '<h5>' +
@@ -311,7 +333,7 @@ export default {
 }
 .popup-hours {
   text-align: center;
-  font-size: 1.2em;
+  font-size: 1em;
   font-weight: 100;
 }
 .join-event-button {

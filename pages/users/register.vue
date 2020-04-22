@@ -1,47 +1,102 @@
 <template>
-  <div>
-    <h1>This will be the Register page</h1>
-    <form>
-      <h3>userName:</h3>
-      <input v-model="register.username" type="name" name="username" />
+  <section class="section">
+    <div class="container">
+      <div class="columns">
+        <div class="column is-4 is-offset-4">
+          <h2 class="title has-text-centered">Register!</h2>
 
-      <h3>password:</h3>
-      <input v-model="register.password" type="password" name="password" />
+          <form method="post" @submit.prevent="register">
+            <div class="field">
+              <label class="label">First Name</label>
+              <div class="control">
+                <input
+                  type="text"
+                  class="input"
+                  name="firstName"
+                  v-model="firstName"
+                  required
+                />
+              </div>
+            </div>
+            <div class="field">
+              <label class="label">Second name</label>
+              <div class="control">
+                <input
+                  type="text"
+                  class="input"
+                  name="secondName"
+                  v-model="secondName"
+                  required
+                />
+              </div>
+            </div>
+            <div class="field">
+              <label class="label">E-mail</label>
+              <div class="control">
+                <input
+                  type="email"
+                  class="input"
+                  name="email"
+                  v-model="email"
+                  required
+                />
+              </div>
+            </div>
+            <div class="field">
+              <label class="label">Password</label>
+              <div class="control">
+                <input
+                  type="password"
+                  class="input"
+                  name="password"
+                  v-model="password"
+                  required
+                />
+              </div>
+            </div>
+            <div class="control">
+              <button type="submit" class="button is-dark is-fullwidth">
+                Register
+              </button>
+            </div>
+          </form>
 
-      <h3>email:</h3>
-      <input v-model="register.email" type="email" name="email" />
-
-      <button @click="createUser()">CreateUser</button>
-    </form>
-
-    <nuxt-link to="/users">Login Page</nuxt-link>
-    <nuxt-link to="/">Back to index </nuxt-link>
-  </div>
+          <div class="has-text-centered" style="margin-top: 20px">
+            Already got an account? <nuxt-link to="/login">Login</nuxt-link>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 </template>
+
 <script>
-import axios from 'axios'
 export default {
   data() {
     return {
-      register: {
-        username: null,
-        password: null,
-        email: null
-      }
+      firstName: '',
+      secondName: '',
+      email: '',
+      password: '',
+      error: null
     }
   },
+
   methods: {
-    async createUser(username, password, email) {
-      const userObj = {
-        username: this.register.username,
-        password: this.register.password,
-        email: this.register.email
+    async register() {
+      try {
+        await this.$axios.post(`${process.env.API_URL}/users/register`, {
+          firstName: this.firstName,
+          lastName: this.secondName,
+          username: this.email,
+          password: this.password
+        })
+
+        this.$router.push('/')
+      } catch (e) {
+        this.error = e
       }
-      await axios
-        .post(`${process.env.API_URL}/api/users`, userObj)
-        .then((res) => console.log(res))
     }
   }
 }
 </script>
-<style></style>
